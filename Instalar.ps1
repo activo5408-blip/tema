@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$repoRaw = 'https://raw.githubusercontent.com/activo5408-blip/tema/main/NegroElegante.ini?cache=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+$repoRaw = 'https://raw.githubusercontent.com/activo5408-blip/tema/main/DotCom.ini?cache=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $rainmeterDirs = @(
   "$env:APPDATA\Rainmeter\Rainmeter.exe",
   "$env:ProgramFiles\Rainmeter\Rainmeter.exe",
@@ -9,17 +9,17 @@ $rainmeter = $rainmeterDirs | Where-Object { Test-Path $_ } | Select-Object -Fir
 
 try {
   $documents = [Environment]::GetFolderPath('MyDocuments')
-  $skinRoot = Join-Path $documents 'Rainmeter\Skins\NegroElegante'
+  $skinRoot = Join-Path $documents 'Rainmeter\Skins\DotCom'
   New-Item -ItemType Directory -Path $skinRoot -Force | Out-Null
-  $iniPath = Join-Path $skinRoot 'NegroElegante.ini'
+  $iniPath = Join-Path $skinRoot 'DotCom.ini'
   Invoke-WebRequest -Uri $repoRaw -OutFile $iniPath -UseBasicParsing -Headers @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
 
   if ($rainmeter) {
     Start-Process -FilePath $rainmeter -ArgumentList '!RefreshApp' -Wait
     Start-Sleep -Seconds 2
-    Start-Process -FilePath $rainmeter -ArgumentList '!DeactivateConfig "NegroElegante" "NegroElegante.ini"' -Wait
+    Start-Process -FilePath $rainmeter -ArgumentList '!DeactivateConfig "DotCom" "DotCom.ini"' -Wait
     Start-Sleep -Milliseconds 500
-    Start-Process -FilePath $rainmeter -ArgumentList '!ActivateConfig "NegroElegante" "NegroElegante.ini"' -Wait
+    Start-Process -FilePath $rainmeter -ArgumentList '!ActivateConfig "DotCom" "DotCom.ini"' -Wait
     Write-Host ''
     Write-Host 'Instalado y cargado correctamente.' -ForegroundColor Green
   } else {
