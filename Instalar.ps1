@@ -52,7 +52,9 @@ try {
       $fileUrl = ([System.Uri]::new($htmlPath)).AbsoluteUri
       # En PowerShell 7, Chromium puede escribir mensajes en stderr aunque la captura funcione.
       # Mezclamos stderr con stdout para que ErrorActionPreference=Stop no aborte el instalador.
-      & $edge --headless=new --disable-gpu --hide-scrollbars --no-first-run --no-default-browser-check --window-size=64,64 "--screenshot=$pngPath" $fileUrl 2>&1 | Out-Null
+      $oldErrorActionPreference = $ErrorActionPreference
+      $ErrorActionPreference = "Continue"
+      try { & $edge --headless --disable-gpu --hide-scrollbars --no-first-run --no-default-browser-check --window-size=64,64 "--screenshot=$pngPath" $fileUrl 2>$null | Out-Null } finally { $ErrorActionPreference = $oldErrorActionPreference }
       Remove-Item -LiteralPath $htmlPath -Force -ErrorAction SilentlyContinue
       if (-not (Test-Path $pngPath)) { throw "No se pudo convertir el icono $icon a PNG." }
     }
