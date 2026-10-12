@@ -1,5 +1,4 @@
 $ErrorActionPreference = 'Stop'
-$repoRaw = 'https://raw.githubusercontent.com/activo5408-blip/tema/main/DotCom.ini?cache=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $rainmeterDirs = @(
   "$env:APPDATA\Rainmeter\Rainmeter.exe",
   "$env:ProgramFiles\Rainmeter\Rainmeter.exe",
@@ -12,7 +11,16 @@ try {
   $skinRoot = Join-Path $documents 'Rainmeter\Skins\DotCom'
   New-Item -ItemType Directory -Path $skinRoot -Force | Out-Null
   $iniPath = Join-Path $skinRoot 'DotCom.ini'
-  Invoke-WebRequest -Uri $repoRaw -OutFile $iniPath -UseBasicParsing -Headers @{ 'Cache-Control' = 'no-cache'; 'Pragma' = 'no-cache' }
+
+  # Primero usa el INI que viene dentro del ZIP; así no depende de raw.githubusercontent.com.
+  $localIni = Join-Path $PSScriptRoot 'DotCom.ini'
+  if (Test-Path $localIni) {
+    Copy-Item -LiteralPath $localIni -Destination $iniPath -Force
+  } else {
+    # Respaldo para cuando se ejecuta solo el instalador.
+    $repoRaw = 'https://raw.githubusercontent.com/activo5408-blip/tema/main/DotCom.ini'
+    Invoke-WebRequest -Uri $repoRaw -OutFile $iniPath -UseBasicParsing
+  }
 
   if ($rainmeter) {
     Start-Process -FilePath $rainmeter -ArgumentList '!RefreshApp' -Wait
@@ -21,10 +29,10 @@ try {
     Start-Sleep -Milliseconds 500
     Start-Process -FilePath $rainmeter -ArgumentList '!ActivateConfig "DotCom" "DotCom.ini"' -Wait
     Write-Host ''
-    Write-Host 'Instalado y cargado correctamente.' -ForegroundColor Green
+    Write-Host 'DotCom instalado y cargado correctamente.' -ForegroundColor Green
   } else {
     Write-Host ''
-    Write-Host 'El tema se instaló, pero Rainmeter no está instalado o no se encontró.' -ForegroundColor Yellow
+    Write-Host 'DotCom se copió, pero Rainmeter no está instalado o no se encontró.' -ForegroundColor Yellow
     Write-Host 'Instala Rainmeter desde https://www.rainmeter.net/ y vuelve a ejecutar Instalar.bat.'
   }
   Write-Host "Archivo instalado en: $iniPath"
@@ -32,7 +40,7 @@ try {
   Write-Host ''
   Write-Host 'No se pudo completar la instalación.' -ForegroundColor Red
   Write-Host $_.Exception.Message
-  Write-Host 'Comprueba tu conexión a Internet e inténtalo otra vez.'
+  Write-Host 'Asegúrate de extraer el ZIP completo y ejecutar Instalar.bat desde esa carpeta.'
 }
 Write-Host ''
 Read-Host 'Pulsa Enter para cerrar'
