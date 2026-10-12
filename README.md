@@ -1,4 +1,4 @@
-# Negro Elegante — Rainmeter
+# DotCom — Rainmeter
 
 Skin compacto y oscuro para Rainmeter en Windows 10.
 
