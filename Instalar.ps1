@@ -23,6 +23,7 @@ try {
   }
 
 
+  Write-Host 'Copiando archivos del tema DotCom...' -ForegroundColor Cyan
   # Copia los iconos originales del tema Eleven.
   $localIcons = Join-Path $PSScriptRoot '@Resources\Icons'
   $iconRoot = Join-Path $skinRoot '@Resources\Icons'
@@ -30,6 +31,7 @@ try {
     New-Item -ItemType Directory -Path $iconRoot -Force | Out-Null
     Copy-Item -Path (Join-Path $localIcons '*.svg') -Destination $iconRoot -Force
 
+    Write-Host 'Los SVG están copiados. Convirtiendo iconos a PNG con Edge...' -ForegroundColor Cyan
     # Rainmeter no lee SVG directamente: los convertimos a PNG con Microsoft Edge,
     # que normalmente ya viene instalado en Windows.
     $edgeCandidates = @(
@@ -41,27 +43,40 @@ try {
     if (-not $edge) { throw 'No se encontró Microsoft Edge para preparar los iconos. Instala/actualiza Edge y vuelve a ejecutar el instalador.' }
 
     foreach ($icon in @('CPU','RAM','Network','Disk')) {
+      Write-Host "Preparando icono $icon..." -ForegroundColor Cyan
       $svgPath = Join-Path $iconRoot ($icon + '.svg')
       $pngPath = Join-Path $iconRoot ($icon + '.png')
-      $svg = Get-Content -LiteralPath $svgPath -Raw
-      $svg = $svg -replace '<\?xml[^>]*\?>', ''
-      $svg = $svg -replace 'currentColor', '#DDE4EE'
-      $htmlPath = Join-Path $iconRoot ($icon + '-render.html')
-      $html = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;width:64px;height:64px;background:transparent;overflow:hidden}svg{width:64px;height:64px}</style></head><body>' + $svg + '</body></html>'
-      Set-Content -LiteralPath $htmlPath -Value $html -Encoding UTF8
-      $fileUrl = ([System.Uri]::new($htmlPath)).AbsoluteUri
-      # En PowerShell 7, Chromium puede escribir mensajes en stderr aunque la captura funcione.
-      # Mezclamos stderr con stdout para que ErrorActionPreference=Stop no aborte el instalador.
-      $oldErrorActionPreference = $ErrorActionPreference
-      $ErrorActionPreference = "Continue"
-      try { & $edge --headless --disable-gpu --hide-scrollbars --no-first-run --no-default-browser-check --window-size=64,64 "--screenshot=$pngPath" $fileUrl 2>$null | Out-Null } finally { $ErrorActionPreference = $oldErrorActionPreference }
-      Remove-Item -LiteralPath $htmlPath -Force -ErrorAction SilentlyContinue
-      if (-not (Test-Path $pngPath)) { throw "No se pudo convertir el icono $icon a PNG." }
+      if (-not (Test-Path $svgPath)) { throw "Falta el archivo $icon.svg en $localIcons" }
+
+      # Abrir el SVG directamente en Edge headless evita el HTML intermedio,
+      # que en algunas versiones de Edge deja la ventana negra o se queda esperando.
+      $fileUrl = ([System.Uri]::new($svgPath)).AbsoluteUri
+      $profileDir = Join-Path $env:TEMP ('DotCom-Edge-' + $icon)
+      $edgeArgs = @(
+        '--headless',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+        "--user-data-dir=$profileDir",
+        '--window-size=64,64',
+        "--screenshot=$pngPath",
+        $fileUrl
+      )
+      $proc = Start-Process -FilePath $edge -ArgumentList $edgeArgs -PassThru -WindowStyle Hidden
+      if (-not $proc.WaitForExit(15000)) {
+        try { $proc.Kill() } catch {}
+        throw "Edge tardó demasiado preparando el icono $icon. Cierra Edge y vuelve a ejecutar el instalador."
+      }
+      Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue
+      if (-not (Test-Path $pngPath) -or (Get-Item -LiteralPath $pngPath).Length -eq 0) {
+        throw "Edge no pudo generar el PNG de $icon. El instalador se detuvo en ese icono."
+      }
     }
   } else {
     throw 'No se encontró @Resources\Icons en la carpeta extraída. Descarga y extrae el ZIP completo.'
   }
 
+  Write-Host 'Iconos preparados. Terminando instalación de DotCom...' -ForegroundColor Cyan
   if ($rainmeter) {
     Start-Process -FilePath $rainmeter -ArgumentList '!RefreshApp' -Wait
     Start-Sleep -Seconds 2
