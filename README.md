@@ -11,11 +11,11 @@ Skin compacto y oscuro para Rainmeter en Windows 10.
 Si Windows muestra una advertencia, asegúrate de que descargaste los archivos de este repositorio antes de permitir la ejecución.
 
 ## Incluye
-- Uso de CPU y memoria RAM con símbolos visuales.
-- Red con flechas de descarga y subida.
-- Discos identificados visualmente con símbolos y porcentaje de espacio usado en C:, D:, E:, F:, G: y H:.
+- Iconos originales de Eleven-icon-theme para CPU, RAM, red y discos, convertidos automáticamente a PNG durante la instalación para que Rainmeter pueda mostrarlos.
+- Velocidad de descarga y subida de la red.
+- Porcentaje de espacio usado en las unidades C:, D:, E:, F:, G: y H:.
 
-Los símbolos siguen un estilo minimalista y no requieren instalar fuentes ni paquetes de iconos adicionales.
+**Créditos de iconos:** [Eleven-icon-theme](https://github.com/mjkim0727/Eleven-icon-theme), proyecto de código abierto bajo GPL-3.0. El instalador utiliza Microsoft Edge para convertir los SVG a PNG; no instala programas adicionales.
 
 ## Personalización
 Las unidades se configuran de forma estática. Si tu PC no tiene alguna letra, puedes quitar su bloque; si tienes otras unidades, copia un bloque y cambia `Drive=C:` por la letra correspondiente.
