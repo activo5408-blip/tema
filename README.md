@@ -11,10 +11,11 @@ Skin compacto y oscuro para Rainmeter en Windows 10.
 Si Windows muestra una advertencia, asegúrate de que descargaste los archivos de este repositorio antes de permitir la ejecución.
 
 ## Incluye
-- Uso de CPU.
-- Memoria RAM utilizada.
-- Velocidad de descarga y subida.
-- Porcentaje de espacio usado en las unidades C:, D:, E:, F:, G: y H:.
+- Uso de CPU y memoria RAM con símbolos visuales.
+- Red con flechas de descarga y subida.
+- Discos identificados visualmente con símbolos y porcentaje de espacio usado en C:, D:, E:, F:, G: y H:.
+
+Los símbolos siguen un estilo minimalista y no requieren instalar fuentes ni paquetes de iconos adicionales.
 
 ## Personalización
 Las unidades se configuran de forma estática. Si tu PC no tiene alguna letra, puedes quitar su bloque; si tienes otras unidades, copia un bloque y cambia `Drive=C:` por la letra correspondiente.
