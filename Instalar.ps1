@@ -33,7 +33,7 @@ try {
     # Rainmeter no lee SVG directamente: los convertimos a PNG con Microsoft Edge,
     # que normalmente ya viene instalado en Windows.
     $edgeCandidates = @(
-      "$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
+      "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
       "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
       "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe"
     )
@@ -44,6 +44,7 @@ try {
       $svgPath = Join-Path $iconRoot ($icon + '.svg')
       $pngPath = Join-Path $iconRoot ($icon + '.png')
       $svg = Get-Content -LiteralPath $svgPath -Raw
+      $svg = $svg -replace '<\?xml[^>]*\?>', ''
       $svg = $svg -replace 'currentColor', '#DDE4EE'
       $htmlPath = Join-Path $iconRoot ($icon + '-render.html')
       $html = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;width:64px;height:64px;background:transparent;overflow:hidden}svg{width:64px;height:64px}</style></head><body>' + $svg + '</body></html>'
