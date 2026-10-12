@@ -31,46 +31,44 @@ try {
     New-Item -ItemType Directory -Path $iconRoot -Force | Out-Null
     Copy-Item -Path (Join-Path $localIcons '*.svg') -Destination $iconRoot -Force
 
-    Write-Host 'Los SVG están copiados. Convirtiendo iconos a PNG con Edge...' -ForegroundColor Cyan
-    # Rainmeter no lee SVG directamente: los convertimos a PNG con Microsoft Edge,
-    # que normalmente ya viene instalado en Windows.
-    $edgeCandidates = @(
-      "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
-      "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-      "$env:LOCALAPPDATA\Microsoft\Edge\Application\msedge.exe"
-    )
-    $edge = $edgeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if (-not $edge) { throw 'No se encontró Microsoft Edge para preparar los iconos. Instala/actualiza Edge y vuelve a ejecutar el instalador.' }
-
+    # Generar PNG localmente con System.Drawing. No depende de Edge ni de Internet.
+    Write-Host 'Creando iconos PNG con Windows...' -ForegroundColor Cyan
+    Add-Type -AssemblyName System.Drawing
     foreach ($icon in @('CPU','RAM','Network','Disk')) {
       Write-Host "Preparando icono $icon..." -ForegroundColor Cyan
-      $svgPath = Join-Path $iconRoot ($icon + '.svg')
       $pngPath = Join-Path $iconRoot ($icon + '.png')
-      if (-not (Test-Path $svgPath)) { throw "Falta el archivo $icon.svg en $localIcons" }
-
-      # Abrir el SVG directamente en Edge headless evita el HTML intermedio,
-      # que en algunas versiones de Edge deja la ventana negra o se queda esperando.
-      $fileUrl = ([System.Uri]::new($svgPath)).AbsoluteUri
-      $profileDir = Join-Path $env:TEMP ('DotCom-Edge-' + $icon)
-      $edgeArgs = @(
-        '--headless',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-default-browser-check',
-        "--user-data-dir=$profileDir",
-        '--window-size=64,64',
-        "--screenshot=$pngPath",
-        $fileUrl
-      )
-      $proc = Start-Process -FilePath $edge -ArgumentList $edgeArgs -PassThru -WindowStyle Hidden
-      if (-not $proc.WaitForExit(15000)) {
-        try { $proc.Kill() } catch {}
-        throw "Edge tardó demasiado preparando el icono $icon. Cierra Edge y vuelve a ejecutar el instalador."
+      $bmp = New-Object System.Drawing.Bitmap(64,64)
+      $g = [System.Drawing.Graphics]::FromImage($bmp)
+      $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+      $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(221,228,238),3)
+      $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+      $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+      $g.Clear([System.Drawing.Color]::Transparent)
+      switch ($icon) {
+        'CPU' {
+          $g.DrawRectangle($pen,17,17,30,30)
+          $g.DrawRectangle($pen,24,24,16,16)
+          foreach ($p in @(22,32,42)) {
+            $g.DrawLine($pen,$p,9,$p,17); $g.DrawLine($pen,$p,47,$p,55)
+            $g.DrawLine($pen,9,$p,17,$p); $g.DrawLine($pen,47,$p,55,$p)
+          }
+        }
+        'RAM' {
+          $g.DrawRectangle($pen,8,19,48,26)
+          foreach ($x in @(14,23,32,41,50)) { $g.DrawRectangle($pen,$x,25,5,9); $g.DrawLine($pen,$x+2,45,$x+2,53) }
+        }
+        'Network' {
+          $g.DrawLine($pen,19,20,44,19); $g.DrawLine($pen,19,20,31,44); $g.DrawLine($pen,44,19,31,44)
+          $g.DrawEllipse($pen,11,12,16,16); $g.DrawEllipse($pen,36,11,16,16); $g.DrawEllipse($pen,23,37,16,16)
+        }
+        'Disk' {
+          $g.DrawEllipse($pen,11,12,42,14); $g.DrawLine($pen,11,19,11,45); $g.DrawLine($pen,53,19,53,45)
+          $g.DrawArc($pen,11,38,42,14,0,180); $g.DrawArc($pen,11,25,42,14,0,180)
+        }
       }
-      Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue
-      if (-not (Test-Path $pngPath) -or (Get-Item -LiteralPath $pngPath).Length -eq 0) {
-        throw "Edge no pudo generar el PNG de $icon. El instalador se detuvo en ese icono."
-      }
+      $bmp.Save($pngPath,[System.Drawing.Imaging.ImageFormat]::Png)
+      $pen.Dispose(); $g.Dispose(); $bmp.Dispose()
+      if (-not (Test-Path $pngPath) -or (Get-Item $pngPath).Length -eq 0) { throw "No se pudo crear el PNG del icono $icon." }
     }
   } else {
     throw 'No se encontró @Resources\Icons en la carpeta extraída. Descarga y extrae el ZIP completo.'
